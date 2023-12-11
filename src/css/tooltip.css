@@ -1,0 +1,46 @@
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 300px;
+  background-color: #F6F8FC;
+  color: #000000;
+  text-align: left;
+  padding: 5px 10px; /* top/bottom padding 5px, left/right padding 10px */
+  border-radius: 6px;
+  font-size: 0.9em;
+  
+  position: absolute;
+  z-index: 1;
+  top: 125%; /* Changed from bottom to top */
+  left: 50%;
+  transform: translateX(-30%); /* This helps to center the tooltip */
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+.highlight {
+  position: relative;
+}
+
+.highlight::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px; /* Adjust this to move the line up or down */
+  width: 100%;
+  border-bottom: 1px dotted darkgrey; /* The color of the line */
+}
+
+.highlightBlock {
+  background-color: #d4ffac; /* you can replace this with your desired color */
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
