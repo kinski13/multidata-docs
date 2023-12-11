@@ -1,7 +1,8 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-import themeGithub from 'prism-react-renderer';
+const lightCodeTheme = require('prism-react-renderer/themes/github');
+const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -33,30 +34,31 @@ const config = {
 
   presets: [
     [
-      'classic',
-      /** @type {import('@docusaurus/preset-classic').Options} */
-      ({
+      '@docusaurus/preset-classic', // Ensure this is '@docusaurus/preset-classic'
+      {
         docs: {
-          routeBasePath: '/',
+          routeBasePath: '/', // Set this to '/' to make docs the root
           sidebarPath: require.resolve('./sidebars.js'),
-          sidebarCollapsible: true,  
+          sidebarCollapsible: true,
           sidebarCollapsed: false,
+          // If you want "Edit this page" links, set your repo URL here
+          editUrl: 'https://github.com/yourusername/your-repo',
         },
         blog: {
           showReadingTime: true,
           blogSidebarCount: 'ALL',
           blogSidebarTitle: 'All posts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          // If you want "Edit this page" links for the blog, set your repo URL here
+          editUrl: 'https://github.com/yourusername/your-repo',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
-        }
-      }),
+        },
+        // If you don't want a separate landing page, disable it
+        pages: false, // Disable the 'pages' plugin
+      },
     ],
-  ],
+  ],  
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -67,7 +69,7 @@ const config = {
         title: ' ',
         logo: {
           alt: 'My Site Logo',
-          src: 'img/booster logo.png',
+          src: 'img/multi_logo_2.png',
           className: 'navbar__logo',
         },
         items: [
@@ -85,7 +87,8 @@ const config = {
         ],
       },
       prism: {
-        theme: themeGithub,
+        theme: lightCodeTheme,
+        darkTheme: darkCodeTheme,
       },
     }),
 };
