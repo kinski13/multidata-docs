@@ -1,0 +1,315 @@
+---
+sidebar_position: 5
+---
+
+
+# Usage examples
+
+## Intro
+
+The usage of Multidata oracle in a smart contract is quite easy. The examples below show how to get prices of `ETH` and `NEAR` on Arbitrum chain. The list of supported assets in each chain could be found on the page of the corresponding network here https://multidata.ai/.
+
+## Main concepts
+
+### Proxies
+
+The development of contracts is continuing and a new version of the oracle contract could be deployed. To avoid changing the oracle contract address on each such deployment consumers can use an address of a proxy contract, which has the same interface (`ICoreMultidataFeedsReader`) as the oracle contract.
+
+After the deployment of a new version of the oracle contract (and if the new version is backward compatible) implementation of the proxy is changed and migration for proxy users is seamless.
+
+### Base `2**112` for prices
+
+All prices are stored with the 2**112 multiplier. It allows to use fractional values. E.g.:
+
+▪️ 0.01 is stored as `0.01 * 2**112` = `51922968585348276285304963292200`   
+▪️ 100 is stored as `100 * 2**112` = `519229685853482762853049632922009600`   
+
+## Examples in popular languages
+
+### Solidity
+
+To use oracle prices in your smart contract, the `ICoreMultidataFeedsReader` interface should be used.
+
+```js
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./interfaces/ICoreMultidataFeedsReader.sol";
+
+contract DataConsumer {
+    
+    ICoreMultidataFeedsReader internal oracle;
+
+    /**
+     * network: Arbitrum
+     * oracle address: 0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1
+     */
+    constructor() {
+        oracle = ICoreMultidataFeedsReader(0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1);
+    }
+
+    /**
+     * Returns prices of `ETH` and `NEAR` in USD
+     */
+    function getLatestPrices() public view returns (uint[2] memory) {
+        string[] memory metrics = new string[](2);
+        metrics[0] = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+        metrics[1] = "NEAR";
+
+        ICoreMultidataFeedsReader.Quote[] memory values = oracle.quoteMetrics(metrics);
+
+        return [
+            values[0].value / 2**112,
+            values[1].value / 2**112
+        ];
+    }
+}
+```
+
+### JavaScript
+
+#### web3
+
+This example uses [web3.js](https://web3js.readthedocs.io/en/v1.10.0/) to fetch prices of `ETH` and `NEAR` on Arbitrum chain.
+
+```js
+    const Web3 = require("web3")
+    const ORACLE_ADDR = '0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1';
+    const RPC_URL = "https://arb1.arbitrum.io/rpc";
+    const ASSETS = [
+        '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+        'NEAR',
+    ]
+    const oracleReaderABI = [{"inputs":[{"internalType":"string[]","name":"names_","type":"string[]"}],"name":"quoteMetrics","outputs":[{"components":[{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint32","name":"updateTS","type":"uint32"}],"internalType":"struct ICoreMultidataFeedsReader.Quote[]","name":"quotes","type":"tuple[]"}],"stateMutability":"view","type":"function"}]
+
+    const web3 = new Web3(RPC_URL)
+    const oracle = new web3.eth.Contract(oracleReaderABI, ORACLE_ADDR)
+    oracle.methods.quoteMetrics(ASSETS)
+        .call()
+        .then((prices) => {
+            // handle code
+            console.log("Latest prices", prices)
+        })
+```
+
+#### ethers.js
+
+This example uses [ethers.js](https://docs.ethers.org/v6/) to fetch prices of `ETH` and `NEAR` on Arbitrum chain.
+
+```js
+    const { ethers } = require("ethers")
+    const ORACLE_ADDR = '0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1';
+    const RPC_URL = "https://arb1.arbitrum.io/rpc";
+    const ASSETS = [
+        '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+        'NEAR',
+    ]
+    const oracleReaderABI = [{"inputs":[{"internalType":"string[]","name":"names_","type":"string[]"}],"name":"quoteMetrics","outputs":[{"components":[{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint32","name":"updateTS","type":"uint32"}],"internalType":"struct ICoreMultidataFeedsReader.Quote[]","name":"quotes","type":"tuple[]"}],"stateMutability":"view","type":"function"}]
+
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL)
+    const oracle  = new ethers.Contract(ORACLE_ADDR, oracleReaderABI, provider)
+    oracle.quoteMetrics(ASSETS)
+        .then((prices) => {
+            // handle code
+            console.log("Latest prices", prices)
+        })
+```
+
+### Python
+
+This example uses [web3.py](https://web3py.readthedocs.io/en/stable/) to fetch prices of `ETH` and `NEAR` on Arbitrum chain.
+
+```js
+from web3 import Web3
+
+ORACLE_ADDR = '0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1'
+RPC_URL = "https://arb1.arbitrum.io/rpc"
+ASSETS = [
+    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    'NEAR',
+]
+ORACLE_READER_ABI = [{"inputs":[{"internalType":"string[]","name":"names_","type":"string[]"}],"name":"quoteMetrics","outputs":[{"components":[{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"uint32","name":"updateTS","type":"uint32"}],"internalType":"struct ICoreMultidataFeedsReader.Quote[]","name":"quotes","type":"tuple[]"}],"stateMutability":"view","type":"function"}]
+
+
+web3 = Web3(Web3.HTTPProvider(RPC_URL))
+contract = web3.eth.contract(address=ORACLE_ADDR, abi=ORACLE_READER_ABI)
+latestPrices = contract.functions.quoteMetrics(ASSETS).call()
+print(latestPrices)
+```
+
+## For Chainlink users
+
+We provide Chainlink-compatible aggregator (`IChainlinkAggregatorV2V3Interface`) for every quoted asset which allows to get the latest price of asset.
+
+See below example of getting prices for `ETH` and `UNI-V2 WETH-CRV` with chainlink compatible aggregators in Gnosis chain.
+
+```js
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./interfaces/IChainlinkAggregatorV2V3Interface.sol";
+
+contract DataConsumerChainlinkCompatibility {
+    
+    IChainlinkAggregatorV2V3Interface internal aggregatorEth;
+    IChainlinkAggregatorV2V3Interface internal aggregatorLpWethCrv;
+
+    /**
+     * network: Gnosis
+     */
+    constructor() {
+        aggregatorEth = IChainlinkAggregatorV2V3Interface(0x05B10FAd302f202809BF2Fd1F1456e211C1A9B20);
+        aggregatorLpWethCrv = IChainlinkAggregatorV2V3Interface(0xD3DCD5fEB3ffB266C6d9829607271dEa61eBa84C);
+    }
+
+    /**
+     * Returns prices of `ETH` and `UNI-V2 WETH-CRV` in USD
+     */
+    function getLatestPrices() public view returns (uint[2] memory) {
+        (,int priceEth,,,) = aggregatorEth.latestRoundData();
+        (,int priceLP,,,) = aggregatorLpWethCrv.latestRoundData();
+
+        return [
+            uint(priceEth) / 10**8,
+            uint(priceLP) / 10**8
+        ];
+    }
+}
+```
+
+## Oracle Api reference
+
+### ICoreMultidataFeedsReader
+
+```js
+    struct Metric {
+        string name;    // unique, immutable in a contract
+        string description;
+        string currency;    // USD, ETH, PCT (for percent), BPS (for basis points), etc
+        string[] tags;
+    }
+
+    struct Quote {
+        uint256 value;
+        uint32 updateTS;
+    }
+```
+
+| Name                           | Description                                      | Returns                  |
+|--------------------------------|--------------------------------------------------|--------------------------|
+| `getMetricsCount`              | Gets a count of metrics quoted by this oracle.   | `uint`                   |
+| `getMetric`                    | Gets metric info by a numerical id.              | `Metric`                 |
+| `getMetrics`                   | Gets a list of metrics quoted by this oracle.    | `Metric[]`               |
+| `hasMetric(string name)`       | Checks if a metric is quoted by this oracle.     | `bool has, uint256 id`   |
+| `quoteMetrics(string[] calldata names)` | Gets last known quotes for specified metrics.   | `Quote[]`                |
+| `quoteMetrics(uint256[] calldata ids)` | Gets last known quotes for specified metrics by internal numerical ids. | `Quote[]` |
+
+Note that the oracle may quote any numerical metrics, not just tokens given by an address. As a result, a metric has a string as a name. Metrics also may be queried by internal ids to save some gas on passing strings around.
+
+### ILegacyMetadataOracleV0_1
+
+Functions in `ILegacyMetadataOracleV0_1`
+
+| Name | Description | Returns |
+|------|-------------|---------|
+| `getStatus` | Returns last update TS of prices. | `Status {uint32 updateTS;uint64 pricesHash;}` |
+| `getAssets` | Gets a list of assets quoted by this oracle. | `address[]` |
+| `hasAsset(address asset)` | Checks if an asset is quoted by this oracle. | `bool` |
+| `quoteAssets(address[] calldata assets)` | Gets last known quotes for the assets. | `Quote[] {uint256 price;uint32 updateTS;}` |
+
+## Examples of usage by DEFI projects
+
+Multidata oracle is used in production in Unit protocol. See UnitMetadataOracle here https://github.com/unitprotocol/core/blob/main/CONTRACTS.md#oracles
+
+Let's describe line-by-line how it works:
+
+```js
+...
+interface IOracleUsd {
+    function assetToUsd(address asset, uint256 amount) external view returns (uint256);
+}
+
+/**
+ * @title Helpers to pack and unpack data as metric names.
+ */
+library AssetConverters {
+    bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
+
+    /// @notice Converts an address to a metric name.
+    /// @dev Converts an address to lowercase string representation. In the most cases quoting still incurs just one
+    ///      extra storage lookup.
+    ///      Implementation inspired by OpenZeppelin Strings.toHexString and costs 29k of gas vs 33k for
+    ///      OpenZeppelin implementation (optimization with 200 runs)
+    function addressToName(address asset) internal pure returns (string memory) {
+        bytes memory buffer = '0x';
+        for (uint256 i = 0; i < 5; i++) {
+            uint value = uint160(asset) >> (4-i)*32;
+            buffer = bytes.concat(
+                buffer,
+                _HEX_SYMBOLS[(value >> 28) & 0xf],
+                _HEX_SYMBOLS[(value >> 24) & 0xf],
+                _HEX_SYMBOLS[(value >> 20) & 0xf],
+                _HEX_SYMBOLS[(value >> 16) & 0xf],
+                _HEX_SYMBOLS[(value >> 12) & 0xf],
+                _HEX_SYMBOLS[(value >>  8) & 0xf],
+                _HEX_SYMBOLS[(value >>  4) & 0xf],
+                _HEX_SYMBOLS[(value      ) & 0xf]
+            );
+        }
+        return string(buffer);
+    }
+}
+
+/// @title MetadataOracle wrapper for Unit protocol
+contract UnitMetadataOracle is IOracleUsd {
+    // Multidata oracle's address is stored in immutable. It allows to save gas on reading of this variable
+    ICoreMultidataFeedsReader public immutable metadataOracle;
+    // Also immutable variable, stores max allowed price age
+    uint256 public immutable maxPriceAgeSeconds;
+
+    constructor(address metadataOracle_, uint256 maxPriceAgeSeconds_) {
+        metadataOracle = ICoreMultidataFeedsReader(metadataOracle_);
+        maxPriceAgeSeconds = maxPriceAgeSeconds_;
+    }
+
+    /**
+     * @notice Evaluates the cost of amount of asset in USD.
+     * @dev reverts on non-supported asset or stale price.
+     * @param asset evaluated asset
+     * @param amount amount of asset in the smallest units
+     * @return result USD value, scaled by 10**18 * 2**112
+     */
+    function assetToUsd(address asset, uint256 amount) external view override returns (uint256 result) {
+        // Prepare arguments for calling oracle. Despite the dact that we need to quote only one price
+        // we still need to make array
+        string[] memory input = new string[](1);
+        input[0] = AssetConverters.addressToName(asset);
+        // quoteAssets returns array. Since we pass only one asset in argument only one element is returned.
+        ICoreMultidataFeedsReader.Quote memory quote = metadataOracle.quoteMetrics(input)[0];
+        // Here we see very important concept of using oracles: we need to check that price returned by oracle
+        // is up to date. Usage of outdated price may lead to losses
+        require(block.timestamp - quote.updateTS <= maxPriceAgeSeconds, 'STALE_PRICE');
+
+        // Multidata oracle store price for whole unit of currency (taking in account 2**112 base)
+        // For example price for 1 eth is stored as X * 2**112 USD where X is the price in USD
+        // Unit protocol wants to get price for amount of asset passed in min units of asset in USD with decimals 18
+        // For example to get price for 1 WETH unit protocol passes 10**18 as amount 
+        // and wants to get X * 10**18 * 2**112 in response where X is the price in USD
+        // If asset has decimal <> 18 price must be scaled accordingly
+        uint256 decimals = uint256(IERC20Like(asset).decimals());
+        require(decimals < 256);
+        // Let's assume that we need to get price for 1 USDT which has decimals = 6.
+        // 10**6 is passed as amount
+        // scaleDecimals = 18-6=12
+        int256 scaleDecimals = 18 - int256(decimals);
+
+        // result = 1 * 2**112 * 10**6
+        result = quote.value * amount;
+        if (scaleDecimals > 0)
+        // result = 1 * 2**112 * 10**6 * 10**12 = 1 * 2**112 * 10**18. So price 1 with base 2**112 and decimals 18 is returned
+            result *= uint256(10) ** uint256(scaleDecimals);
+        else if (scaleDecimals < 0)
+            result /= uint256(10) ** uint256(-scaleDecimals);
+    }
+}
+```
