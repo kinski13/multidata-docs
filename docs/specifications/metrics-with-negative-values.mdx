@@ -1,0 +1,90 @@
+---
+sidebar_position: 4
+---
+
+# Metrics with negative values
+
+### Problem
+
+The capabilities of the oracle need to be expanded by making the metrics more abstract, and not just representing the price of an asset. For example, we want to provide metrics such as Inflation Rate, Retail Sales MoM etc. The values of such metrics can be negative, which is not supported by the current implementation of contracts and Python code.
+
+The current representation of the metric value as a base and delta does not allow representing a negative number, since delta is a logarithm(was/became).
+
+### Solution options
+
+### 1.
+
+Encode the sign of a number in the base, for example in the most significant bit. When the value changes sign - just do a full update.
+
+Pros:
+
+- Simplest implementation
+
+Cons:
+
+- High update cost when the price crosses 0. It is also possible that the price will require several full updates as it approaches 0.
+
+### 2.
+
+Optimization of option 1. Instead of encoding the sign in the base, can store the sign in a separate bitmap with slots of unit256. In this case, if several metrics values from one slot change sign, we only need to update one slot.
+
+Pros:
+
+- Saving the cost of crossing the metric value the 0.
+- There is experience with bitmap for disabled metrics.
+
+Cons:
+
+- More complex implementation. Additional data structures required.
+- There are fears that as changes near zero, the value of metric will still require several full updates due to the deltas mechanism.
+
+### 3.
+
+Offset from 0. For many metrics it is possible to limit the range of negative values. For example, the yield of bonds cannot be less than -100%. In addition to the base, we could store some offset from 0 (+100 for bond's yield e. g.), which will allow us to operate on the metric as if the range of its values is completely positive. The reader will then be given a value inversely corrected for that offset.
+
+Pros:
+
+- Simple implementation. The delta mechanism will work without changes, and the metric will simply have an additional property that does not require changes.
+
+Cons:
+
+- Large loss of precision in the area close to zero values. In addition, the highest precision will be near the lower bound of the range of values, which in practice will very rarely be achieved.
+
+### 4.
+
+Mix options 1 and 3. Choose a small value as the offset: 1.0 for example. This will ensure the precision of the representation of near-zero values with a step of the order of 0.002, which may be sufficient for most metrics. Next, suppose the real value of the metric falls below -0.5 (base 0.5 with offset 1.0). Then we change the sign of the metric and make full update to change base. For a real metric value of -0.5, the base will be 1.5 (remember that the final value will be with a negative sign). The reverse transition will occur when the real value of the metric rises above +0.5 (base 0.5, as in the previous case). Since we're doing a full update anyway on a significant 0 crossing, the sign bit can be stored in the base without additional data structures.
+
+Pros:
+
+- No frequent sign updates when the metric fluctuates around 0.
+- Fewer full updates as the metric value approaches 0 due to delta mechanism.
+- No additional data structures required.
+
+Cons:
+
+- Complex implementation
+- Less accurate representation of values around 0, but it may still be acceptable. In addition, can take the absolute offset constant not only 1.0, but adjust it as a property of the Metric based on the precision requirements. Examples (offset -> Absolute value of the price change step near 0):
+  - 1.0 -> 0.002 (1 / 512)
+  - 0.5 -> 0.001 (0.5 / 512)
+  - and so on
+
+### Specification
+
+[Option 2](https://github.com/multidatacore/wiki/blob/main/specifications/Metrics-with-negative-values.md#2) was chosen. Price behavior near 0 will be processed within another task.
+
+#### Contract interface
+
+The interface of the contract must be changed.
+
+`*Quote.value*`
+
+Type should be int256. `int256` value type will allow to have a more convenient interface, as well as encapsulate a specific implementation of working with negative numbers.
+
+`*Update*`
+
+New bitmap should be added to represent sign changes of metric values.
+
+#### Updater
+
+Should detect sign changes in metric values and do generate the correspond parameter for the contract `update()`.
+

@@ -1,0 +1,172 @@
+---
+sidebar_position: 3
+---
+
+# Median and Proof feeds
+
+### Highlevel overview
+
+- MedianFeeds
+
+  - tiny epoch (5 min)   
+  - in multidata chain (free gas) with fallback to cheap network   
+  - not multiparty, since requires time for sync   
+  - multiparty update metric set, validator set   
+  - calculates median for each metric   
+  - stores signed merkle root tree for prev epoch   
+  - can be main and backup, signatures for main suitable for backups   
+
+- Validators:
+  - collect values for a huge amount of metrics
+  - write all of them to MedianFeeds
+  - at the end of each round
+    - get values of all metrics on block on the end of epoch
+    - make merkle tree and get root
+    - via multiparty mechanism sign merkle tree root for each target network
+    - send root, vrs to MedianFeeds
+
+- Proof Feeds
+
+  - accept root, vrs, proof, metric value, timestamp, epoch
+  - checks that signature of root is correct
+  - checks that merkle proof is valid for root
+  - checked value could be stored and returned via ICoreMultidataFeedsReader
+
+- js SDK:
+
+  - allows to dapps to retrieve metric values from MedianFeeds
+  - collects values of all metrics on block on the end of the last epoch
+  - generates merkle tree, root, proof for needed metric
+
+- metric values users
+
+  - get epoch, merkle root, vrs, merkle proof, metric id, metric value, metric update ts from JS SDK
+  - send it to own contract
+  - contract checks that metric update ts is good for contract purposes
+  - contract calls MerkleFeeds and checks that metric value, metric update ts are correct
+
+### MedianFeeds
+
+Standard `ICoreMultidataFeedsReader` interface for reading.
+
+Bcs of implementation doesn't support price 2**256-1.
+
+Update values: `function update(uint32 epoch_, uint[] calldata metricIds_, uint256[] calldata prices_)`
+
+Set signed merkle tree root for previous epoch
+
+```js
+function setSignedMerkleTreeRoot(
+    uint32 epoch_, bytes32 root_, uint8 v_, bytes32 r_, bytes32 s_
+)
+```
+
+Read the last merkle tree root:
+
+
+```js
+    struct SignedMerkleTreeRoot {
+        uint32 epoch;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+        bytes32 root;
+    }
+
+    function getSignedMerkleTreeRoot() public view returns (SignedMerkleTreeRoot memory) {
+        return _signedMerkleTreeRoots;
+    }
+```
+
+Administrative functions (add validators, add/update metrics) are the same as in Multiparty oracle
+
+Could be called several times per epoch by each validator, but with different metricIds. It's recommended to send batches of 100 values. In this case will usually be spent 1_138_512 - 9_262_586 gas (best - worst case, depends on for which metrics median is calculated)
+
+### Validators
+
+Update set of metrics and set of validators is the same as in MultiPartyFeeds
+
+Need to port to python (or find existing) https://github.com/OpenZeppelin/merkle-tree .
+
+Each epoch each validator sends all available values to MedianFeeds
+
+At the end of each epoch of MedianFeeds (on the block of epoch end):
+
+- retrieve Quote for all metrics
+- calc merkle tree root for all values (epoch, metric id, metric values, update ts ("uint32", "uint256", "uint256", "uint32")). See https://github.com/OpenZeppelin/merkle-tree
+- sign merkle tree root for each contract in target networks and sent to MedianFeeds (setSignedMerkleTreeRoot)
+
+Probably we need to allow to send roots not only from prev epoch
+
+### ProofFeeds
+
+2 scenarios of usage:
+
+check proof retrieved from MedianFeeds multidata
+check proof and set values which will be available with ICoreMultidataFeedsReader and couldn be wrapped by ChainlinkCompatibility. jr
+
+Useful read methods
+
+Methods which checks correctness of passed value, update ts with passed merkle proof and stored merkle tree root
+
+```js
+struct SignedMerkleTreeRoot {
+    uint32 epoch;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+    bytes32 root;
+}
+
+struct CheckedData {
+    bytes32[] merkleTreeProof;
+    string metricName;
+    uint256 metricValue;
+    uint32 metricUpdateTs;
+}
+
+// throws if incorrect
+function requireValidProof(
+    SignedMerkleTreeRoot memory signedMerkleTreeRoot_,
+    CheckedData memory checkedData_
+) external view;
+
+// returns result of check
+function isProofValid(
+    SignedMerkleTreeRoot memory signedMerkleTreeRoot_,
+    CheckedData memory checkedData_
+) external view returns (bool);
+```
+
+Update methods:
+
+```js
+function setValue(SignedMerkleTreeRoot calldata signedMerkleTreeRoot_, CheckedData calldata data_)
+```
+
+TODO investigate multiproof, if it is possible implement checkMulti
+
+### JS SDK
+
+Need to implement method
+
+```js
+getMetricValueWithProof(metricId)
+```
+
+- store addresses of MedianFeeds in multidata chain and backup chains (gnosis)
+- get latest available merkle tree root from MedianFeeds in multidata+backup chains
+- retrieve from MedianFeeds all quotes for merkle tree epoch from prev step
+  - calculates last block of epoch
+  - retrieve values from MedianFeeds on this block
+- builds merkle tree https://github.com/OpenZeppelin/merkle-tree
+- get proofs for metricId
+- returns
+  - SignedMerkleTreeRoot
+  - CheckedData
+
+### Metric values users
+
+- Contract (and Dapp) must check update ts got from JS SDK
+- call methods requireValidProof or isProofValid to check if data is valid
+- call setValue and then read with ICoreMultidataFeedsReader interface

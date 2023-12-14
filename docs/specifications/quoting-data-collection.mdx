@@ -1,0 +1,37 @@
+---
+sidebar_position: 6
+---
+
+# Quoting data collection
+
+## Data Collection Architecture proposals in `quoting`
+
+The document outlines architecture for data collection in the `quoting` project. In this framework, `DataCollector` serves as an orchestrator, analogous to the role of `Feeder`, managing the life cycles of various data sources. On the other hand, `DataSourceCollector` acts as an equivalent to `PriceFeed`, designed for each type of data (e.g., trade data using `CEXClient`'s, liquidity data, etc.)
+
+### New components
+
+#### DataCollectionStorage
+
+`DataCollectionStorage` is the layer for data persistence. It provides an abstract way to store time-series data from various data sources. It's designed to be storage-agnostic, initially using Redis as the backend.
+
+**Interface**
+
+The abstract base class `DataCollectionStorage` serves as the interface for all storage implementations. It defines methods to work with time-series data.
+
+For example:
+
+```js
+class DataCollectionStorage(ABC):
+    
+    @abstractmethod
+    def store(self, key: str, value: Any, timestamp: int) -> None:
+        """Stores a data point associated with a key and timestamp."""
+        pass
+    
+    @abstractmethod
+    def fetch(self, key: str, start_time: int, end_time: int) -> List[Tuple[int, Any]]:
+        """Fetches a series of data points based on a key and a time range."""
+        pass
+```
+
+

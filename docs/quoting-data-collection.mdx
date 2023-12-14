@@ -1,0 +1,138 @@
+---
+sidebar_position: 6
+---
+
+# Quoting data collection
+
+## Data Collection Architecture proposals in `quoting`
+
+The document outlines architecture for data collection in the `quoting` project. In this framework, `DataCollector` serves as an orchestrator, analogous to the role of `Feeder`, managing the life cycles of various data sources. On the other hand, `DataSourceCollector` acts as an equivalent to `PriceFeed`, designed for each type of data (e.g., trade data using `CEXClient`'s, liquidity data, etc.)
+
+### New components
+
+#### DataCollectionStorage
+
+`DataCollectionStorage` is the layer for data persistence. It provides an abstract way to store time-series data from various data sources. It's designed to be storage-agnostic, initially using Redis as the backend.
+
+**Interface**
+
+The abstract base class `DataCollectionStorage` serves as the interface for all storage implementations. It defines methods to work with time-series data.
+
+For example:
+
+```js
+class DataCollectionStorage(ABC):
+    
+    @abstractmethod
+    def store(self, key: str, value: Any, timestamp: int) -> None:
+        """Stores a data point associated with a key and timestamp."""
+        pass
+    
+    @abstractmethod
+    def fetch(self, key: str, start_time: int, end_time: int) -> List[Tuple[int, Any]]:
+        """Fetches a series of data points based on a key and a time range."""
+        pass
+```
+
+**Redis Implementation**
+
+In the Redis implementation, the time-series data would be stored using Redis TimeSeries, which provides efficient storage and querying for time-based data.
+
+**Modules to add**
+
+For example:
+
+```js
+quoting
+└── storage
+    ├── __init__.py
+    ├── base.py
+    └── redis_storage.py
+```
+
+#### DataSourceCollector
+
+The `DataSourceCollector` is an interface that abstracts the logic for collecting data from various sources and manages its own lifecycle and data processing. It is useful when dealing with different data sources that have varying connection methods and update frequencies. It is used with a `DataCollectionStorage` backend to which it passes the collected data.
+
+**Interface**
+
+The interface includes a single method: `run(storage: DataCollectionStorage)`, which is designed to be asynchronous for flexible data collection and processing. This universal method can operate in various modes—either running in an infinite loop to listen to a WebSocket or performing periodic polling via HTTP.
+
+For example:
+
+```js
+class DataSourceCollector(ABC):
+
+    @abstractmethod
+    async def run(self, storage: DataCollectionStorage) -> None:
+        """
+        Starts the process of collecting and processing data.
+        This method can run in an infinite loop, polling the data source or listening to a WebSocket.
+        """
+        pass
+```
+
+**Implementation Details**
+
+The `DataSourceCollector` interface allows for various implementations depending on the data source and the connection type. For example:
+
+1. Implementations leveraging `CEXClient.get_trades()` for CEX trade data similar to the existing CEX Feeds.
+2. Custom liquidity monitoring solutions that may operate similarly to existing DEX Feeds.
+3. Potential implementations utilizing WebSockets for more efficient data collection.
+
+These implementations are expected to be modular and easy to plug into the `DataCollector` orchestration layer.
+
+**Modules to add**
+
+For example:
+
+```js
+quoting
+└── data_collectors
+    ├── __init__.py
+    ├── base.py
+    ├── trades_data_collector.py
+    ├── liquidity_data_collector.py
+    └── ...
+```
+
+**DataCollector Interaction**
+
+The `DataCollector` class can simply call the `run()` method for each DataSourceCollector instance. Each `DataSourceCollector` operates independently, polling its data source or listening to a WebSocket, and sends the data to the specified storage.
+
+#### DataCollector
+
+The `DataCollector` is similar to a `Feeder` in that it serves as an orchestrator for multiple `DataSourceCollector` instances. It is responsible for:
+
+1. **Managing Life Cycles**: The `DataCollector` invokes the `run()` method of each `DataSourceCollector` in parallel.
+
+2. **Error Handling**: The `DataCollector` catches exceptions and logs them. It also restarts the `DataSourceCollector` if it crashes.
+
+```js
+class DataCollector:
+    
+    def __init__(self, collectors: List[DataSourceCollector], storage: DataCollectionStorage):
+        self.collectors = collectors
+        self.storage = storage
+
+    async def run(self):
+        """Starts the process of collecting and processing data."""
+        # ...
+```
+
+**Module to add**
+
+For example:
+
+```js
+quoting
+└── data_collector.py
+```
+
+#### `load_data_source_collectors()`
+
+It is needed to have a function that is similar to `load_feeds()` to load `DataSourceCollector` instances from a configuration file. Probably, the config should not be extended with any additional fields. Instead, the `feeds` config should be used, because only feeds define which data should be collected. For example, it might be done by adding a method to `PriceFeed` to get needed `DataSourceCollector` instances.
+
+### How Can It Be Used
+
+The `DataCollector` can operate as an independent daemon, focused on accumulating required data in isolation from other processes, particularly the `Updater`. But this allows the Updater to easily utilize the aggregated data by using modified Feeds that can access the `DataCollectionStorage`.
