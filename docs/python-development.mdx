@@ -6,32 +6,32 @@ sidebar_position: 6
 
 ## Git branching strategy
 
-A variation of the [Gitlab Flow](https://about.gitlab.com/topics/version-control/what-is-gitlab-flow/) strategy is used.
+We utilize a variation of the [Gitlab Flow](https://about.gitlab.com/topics/version-control/what-is-gitlab-flow/) strategy.
 
 ### Feature branches
 
-Feature branch is a separate branch used to implement a single feature in project. When you start developing a new feature, create feature branch using main as a starting point. If you know before you start that your work depends on another branch, you can also branch from there (and merge into there later). Branch should be named as follows: feature/, for example feature/uniswap-min-liquidity. If a feature is in fact a bug fix, then it can be named as fix/, for example fix/threading-issue. Once the feature is complete, the changes should be merged into main using a pull request.
+A feature branch is a dedicated branch used to implement a single feature in the project. When starting the development of a new feature, create a feature branch from the main as your starting point. If you anticipate that your work will depend on another branch, you may also branch out from that specific branch (and merge back into it later). Branches should be named following the format: feature/, for example, feature/uniswap-min-liquidity. If the feature is actually a bug fix, name it as fix/, such as fix/threading-issue. Upon completing the feature, merge the changes into the main branch using a pull request.
 
 ### Release branches
 
-Release branch is a branch to support of a new production release. When it's time for a new release, create release branch using main as a starting point. Branch should be named as follows: release-., for example release-1.0 or release-2.3. After publishing a release branch, the following things can be added to the branch:
+A release branch supports a new production release. When it's time for a new release, create a release branch using the main branch as a starting point. The branch should be named following this format: release-x.y, for example, release-1.0 or release-2.3. After the release branch is published, the following items can be added to the branch:
 
-▪️ Bug fixes   
-▪️ Minor features, if a new release is not possible (for example, due to the presence of commits not ready for production in the main) If possible, first merge these fixes into main, and then cherry-pick them into the release branch. This approach is known as "upstream first".   
+- Bug fixes   
+- Minor features, if a new release is not possible (for example, due to the presence of commits not ready for production in the main) If possible, first merge these fixes into main, and then cherry-pick them into the release branch. This approach is known as "upstream first".   
 
 ### `rebase` and `force push`
 
-The commands `rebase` or `force push` on any branch should only be performed after obtaining consent from all individuals interacting with that branch (including those who are just reading, for example, during code review).
+The use of `rebase` or `force push` commands on any branch should only be executed after obtaining consent from all individuals interacting with that branch (including those who are just reading, for example, during code review).
 
 ## Versioning
 
-We version each project in a way that does not contradict the [Semver specification](https://semver.org/).
+Each project is versioned in accordance with the [Semver specification](https://semver.org/).
 
 The version structure consists of three components: major, minor, and patch versions. Each is incremented as follows:
 
-▪️ Major version (0.x.y): At present, the major version is always 0.   
-▪️ Minor version (x.MINOR.y): The minor version is incremented when backwards incompatible changes are introduced.   
-▪️ Patch version (x.y.PATCH): The patch version is incremented in all other cases, such as when backwards compatible changes are made or bugs are fixed.   
+- **Major version** (0.x.y): Currently, the major version is consistently set to 0. 
+- **Minor version** (x.MINOR.y): The minor version is incremented when backwards incompatible changes are introduced.   
+- **Patch version** (x.y.PATCH): The patch version is incremented in all other cases, such as when backwards compatible changes are made or bugs are fixed.   
 
 ## Dependency Versioning
 
@@ -51,7 +51,7 @@ The default rule is to follow the style you see in the project.
 
 ### Python docstrings
 
-A variation of the [Sphinx](https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html#the-sphinx-docstring-format) format is used. It is based on reStructuredText (reST) recommended by the [PEP 287](https://peps.python.org/pep-0287/) and used by default in JetBrains PyCharm.
+We use a variation of the [Sphinx](https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html#the-sphinx-docstring-format) format for docstrings. It is based on reStructuredText (reST) recommended by the [PEP 287](https://peps.python.org/pep-0287/) and used by default in JetBrains PyCharm.
 
 Example:
 
@@ -65,10 +65,10 @@ Summary.
 :raises keyError: raises an exception
 """
 ```
-Some particularities that we follow:
+We adhere to the following specific practices:
 
-▪️ Docstring starts with an empty line   
-▪️ Empty line after summary block is omitted   
-▪️ Description block after summary may be omitted in obvious cases   
-▪️ Docstrings can be omitted completely in private methods and functions   
+- Docstring starts with an empty line   
+- Empty line after summary block is omitted   
+- Description block after summary may be omitted in obvious cases   
+- Docstrings can be omitted completely in private methods and functions   
 

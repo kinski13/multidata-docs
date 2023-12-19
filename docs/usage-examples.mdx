@@ -3,32 +3,34 @@ sidebar_position: 5
 ---
 
 
-# Usage examples
+# Usage Examples
+
+*For detailed source code, please refer to our GitHub repository at [Multidata GitHub](https://github.com/multidatacore/examples/).*
 
 ## Intro
 
-The usage of Multidata oracle in a smart contract is quite easy. The examples below show how to get prices of `ETH` and `NEAR` on Arbitrum chain. The list of supported assets in each chain could be found on the page of the corresponding network here https://multidata.ai/.
+Using the Multidata oracle in a smart contract is straightforward. The examples below demonstrate how to obtain the prices of `ETH` and `NEAR` on Arbitrum chain. The list of supported assets on each chain can be found on the corresponding network's page here: https://multidata.ai/.
 
-## Main concepts
+## Main Concepts
 
 ### Proxies
 
-The development of contracts is continuing and a new version of the oracle contract could be deployed. To avoid changing the oracle contract address on each such deployment consumers can use an address of a proxy contract, which has the same interface (`ICoreMultidataFeedsReader`) as the oracle contract.
+Contract development is ongoing, and new versions of the oracle contract may be deployed. To avoid changing the oracle contract address with each deployment, consumers can use the address of a proxy contract, which shares the same interface (`ICoreMultidataFeedsReader`) as the oracle contract.
 
 After the deployment of a new version of the oracle contract (and if the new version is backward compatible) implementation of the proxy is changed and migration for proxy users is seamless.
 
-### Base `2**112` for prices
+### Base `2**112` for Prices
 
-All prices are stored with the 2**112 multiplier. It allows to use fractional values. E.g.:
+All prices are stored with a 2**112 multiplier, allowing for the use of fractional values. 
+For example:
 
-▪️ 0.01 is stored as `0.01 * 2**112` = `51922968585348276285304963292200`   
-▪️ 100 is stored as `100 * 2**112` = `519229685853482762853049632922009600`   
+- 0.01 is stored as `0.01 * 2**112` = `51922968585348276285304963292200`   
+- 100 is stored as `100 * 2**112` = `519229685853482762853049632922009600`   
 
-## Examples in popular languages
-
+## Examples in Popular Languages
 ### Solidity
 
-To use oracle prices in your smart contract, the `ICoreMultidataFeedsReader` interface should be used.
+To incorporate oracle prices in your smart contract, you should use the `ICoreMultidataFeedsReader` interface.
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -67,10 +69,9 @@ contract DataConsumer {
 ```
 
 ### JavaScript
-
 #### web3
 
-This example uses [web3.js](https://web3js.readthedocs.io/en/v1.10.0/) to fetch prices of `ETH` and `NEAR` on Arbitrum chain.
+This example uses [web3.js](https://web3js.readthedocs.io/) to fetch prices of `ETH` and `NEAR` on the Arbitrum chain.
 
 ```js
     const Web3 = require("web3")
@@ -94,7 +95,7 @@ This example uses [web3.js](https://web3js.readthedocs.io/en/v1.10.0/) to fetch 
 
 #### ethers.js
 
-This example uses [ethers.js](https://docs.ethers.org/v6/) to fetch prices of `ETH` and `NEAR` on Arbitrum chain.
+This example uses [ethers.js](https://docs.ethers.io/) to fetch prices of `ETH` and `NEAR` on the Arbitrum chain.
 
 ```js
     const { ethers } = require("ethers")
@@ -117,9 +118,9 @@ This example uses [ethers.js](https://docs.ethers.org/v6/) to fetch prices of `E
 
 ### Python
 
-This example uses [web3.py](https://web3py.readthedocs.io/en/stable/) to fetch prices of `ETH` and `NEAR` on Arbitrum chain.
+This example uses [web3.py](https://web3py.readthedocs.io/) to fetch prices of `ETH` and `NEAR` on the Arbitrum chain.
 
-```js
+```python
 from web3 import Web3
 
 ORACLE_ADDR = '0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1'
@@ -137,13 +138,13 @@ latestPrices = contract.functions.quoteMetrics(ASSETS).call()
 print(latestPrices)
 ```
 
-## For Chainlink users
+## For Chainlink Users
 
-We provide Chainlink-compatible aggregator (`IChainlinkAggregatorV2V3Interface`) for every quoted asset which allows to get the latest price of asset.
+We provide a Chainlink-compatible aggregator (`IChainlinkAggregatorV2V3Interface`) for each quoted asset, enabling access to the asset's latest price.
 
-See below example of getting prices for `ETH` and `UNI-V2 WETH-CRV` with chainlink compatible aggregators in Gnosis chain.
+See below an example of getting prices for `ETH` and `UNI-V2 WETH-CRV` with Chainlink compatible aggregators in the Gnosis chain.
 
-```js
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -177,11 +178,11 @@ contract DataConsumerChainlinkCompatibility {
 }
 ```
 
-## Oracle Api reference
+## Oracle Api Reference
 
 ### ICoreMultidataFeedsReader
 
-```js
+```solidity
     struct Metric {
         string name;    // unique, immutable in a contract
         string description;
@@ -195,35 +196,35 @@ contract DataConsumerChainlinkCompatibility {
     }
 ```
 
-| Name                           | Description                                      | Returns                  |
-|--------------------------------|--------------------------------------------------|--------------------------|
-| `getMetricsCount`              | Gets a count of metrics quoted by this oracle.   | `uint`                   |
-| `getMetric`                    | Gets metric info by a numerical id.              | `Metric`                 |
-| `getMetrics`                   | Gets a list of metrics quoted by this oracle.    | `Metric[]`               |
-| `hasMetric(string name)`       | Checks if a metric is quoted by this oracle.     | `bool has, uint256 id`   |
-| `quoteMetrics(string[] calldata names)` | Gets last known quotes for specified metrics.   | `Quote[]`                |
-| `quoteMetrics(uint256[] calldata ids)` | Gets last known quotes for specified metrics by internal numerical ids. | `Quote[]` |
+| Name                                    | Description                                                             | Returns                               |
+|-----------------------------------------|-------------------------------------------------------------------------|---------------------------------------|
+| `getMetricsCount`                       | Gets a count of metrics quoted by this oracle                           | `uint`                                |
+| `getMetric`                             | Gets metric info by a numerical id.                                     | `Metric`                              | 
+| `getMetrics`                            | Gets a list of metrics quoted by this oracle.                           | `Metric[]`                            | 
+| `hasMetric(string name)`                | Checks if a metric is quoted by this oracle.                            | `bool has, uint256 id`                |
+| `quoteMetrics(string[] calldata names)` | Gets last known quotes for specified metrics.                           | `Quote[]`                             |
+| `quoteMetrics(uint256[] calldata ids)`  | Gets last known quotes for specified metrics by internal numerical ids. | `Quote[]`                             |
 
-Note that the oracle may quote any numerical metrics, not just tokens given by an address. As a result, a metric has a string as a name. Metrics also may be queried by internal ids to save some gas on passing strings around.
+Note that the oracle may quote any numerical metrics, not just tokens given by an address. As a result, a metric has a string as a name. Metrics also may be queried by internal IDs to save some gas on passing strings around.
 
 ### ILegacyMetadataOracleV0_1
 
 Functions in `ILegacyMetadataOracleV0_1`
 
-| Name | Description | Returns |
-|------|-------------|---------|
-| `getStatus` | Returns last update TS of prices. | `Status {uint32 updateTS;uint64 pricesHash;}` |
-| `getAssets` | Gets a list of assets quoted by this oracle. | `address[]` |
-| `hasAsset(address asset)` | Checks if an asset is quoted by this oracle. | `bool` |
-| `quoteAssets(address[] calldata assets)` | Gets last known quotes for the assets. | `Quote[] {uint256 price;uint32 updateTS;}` |
+| Name                                     | Description                                  | Returns                                       |
+|------------------------------------------|----------------------------------------------|-----------------------------------------------|
+| `getStatus`                              | Returns last update TS of prices             | `Status {uint32 updateTS;uint64 pricesHash;}` |
+| `getAssets`                              | Gets a list of assets quoted by this oracle. | `address[]`                                   | 
+| `hasAsset(address asset)`                | Checks if an asset is quoted by this oracle. | `bool`                                        |
+| `quoteAssets(address[] calldata assets)` | Gets last known quotes for the assets        | `Quote[] {uint256 price;uint32 updateTS;}`    |
 
-## Examples of usage by DEFI projects
+## Examples of Usage by DEFI Projects
 
-Multidata oracle is used in production in Unit protocol. See UnitMetadataOracle here https://github.com/unitprotocol/core/blob/main/CONTRACTS.md#oracles
+The Multidata oracle is utilized in the Unit protocol's production. Refer to UnitMetadataOracle here https://github.com/unitprotocol/core/blob/main/CONTRACTS.md#oracles
 
 Let's describe line-by-line how it works:
 
-```js
+```solidity
 ...
 interface IOracleUsd {
     function assetToUsd(address asset, uint256 amount) external view returns (uint256);

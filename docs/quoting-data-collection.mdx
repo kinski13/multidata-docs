@@ -6,21 +6,21 @@ sidebar_position: 6
 
 ## Data Collection Architecture proposals in `quoting`
 
-The document outlines architecture for data collection in the `quoting` project. In this framework, `DataCollector` serves as an orchestrator, analogous to the role of `Feeder`, managing the life cycles of various data sources. On the other hand, `DataSourceCollector` acts as an equivalent to `PriceFeed`, designed for each type of data (e.g., trade data using `CEXClient`'s, liquidity data, etc.)
+This document outlines the architecture for data collection within the `quoting` project. In this framework, `DataCollector` acts as an orchestrator, similar to the role of `Feeder`, managing the lifecycles of various data sources. On the other hand, `DataSourceCollector` functions similarly to `PriceFeed`, being specifically designed for each type of data, such as trade data using `CEXClient`, liquidity data, and so on.
 
 ### New components
 
 #### DataCollectionStorage
 
-`DataCollectionStorage` is the layer for data persistence. It provides an abstract way to store time-series data from various data sources. It's designed to be storage-agnostic, initially using Redis as the backend.
+`DataCollectionStorage` serves as the persistence layer for data. It provides an abstract way to store time-series data from various data sources. It is designed to be storage-agnostic, with an initial implementation using Redis as the backend.
 
 **Interface**
 
-The abstract base class `DataCollectionStorage` serves as the interface for all storage implementations. It defines methods to work with time-series data.
+The `DataCollectionStorage` abstract base class provides an interface for all storage implementations. It defines methods to work with time-series data.
 
 For example:
 
-```js
+```python
 class DataCollectionStorage(ABC):
     
     @abstractmethod
@@ -52,15 +52,15 @@ quoting
 
 #### DataSourceCollector
 
-The `DataSourceCollector` is an interface that abstracts the logic for collecting data from various sources and manages its own lifecycle and data processing. It is useful when dealing with different data sources that have varying connection methods and update frequencies. It is used with a `DataCollectionStorage` backend to which it passes the collected data.
+The `DataSourceCollector` is an interface that abstracts the logic for collecting data from various sources, managing its own lifecycle and data processing. It is useful when dealing with different data sources that have varying connection methods and update frequencies. It is used with a `DataCollectionStorage` backend to which it passes the collected data.
 
 **Interface**
 
-The interface includes a single method: `run(storage: DataCollectionStorage)`, which is designed to be asynchronous for flexible data collection and processing. This universal method can operate in various modes—either running in an infinite loop to listen to a WebSocket or performing periodic polling via HTTP.
+The interface includes a single method, `run(storage: DataCollectionStorage)`, which is asynchronous to allow for flexible data collection and processing. This universal method can operate in various modes—either running in an infinite loop to listen to a WebSocket or performing periodic polling via HTTP.
 
 For example:
 
-```js
+```python
 class DataSourceCollector(ABC):
 
     @abstractmethod
@@ -74,7 +74,8 @@ class DataSourceCollector(ABC):
 
 **Implementation Details**
 
-The `DataSourceCollector` interface allows for various implementations depending on the data source and the connection type. For example:
+The `DataSourceCollector` interface allows for various implementations depending on the data source and the connection type. 
+For example:
 
 1. Implementations leveraging `CEXClient.get_trades()` for CEX trade data similar to the existing CEX Feeds.
 2. Custom liquidity monitoring solutions that may operate similarly to existing DEX Feeds.
@@ -98,7 +99,7 @@ quoting
 
 **DataCollector Interaction**
 
-The `DataCollector` class can simply call the `run()` method for each DataSourceCollector instance. Each `DataSourceCollector` operates independently, polling its data source or listening to a WebSocket, and sends the data to the specified storage.
+The `DataCollector` class can simply call the `run()` method for each DataSourceCollector instance. Each `DataSourceCollector` operates independently by polling its data source or listening to a WebSocket, and it sends the data to the designated storage.
 
 #### DataCollector
 
@@ -108,7 +109,7 @@ The `DataCollector` is similar to a `Feeder` in that it serves as an orchestrato
 
 2. **Error Handling**: The `DataCollector` catches exceptions and logs them. It also restarts the `DataSourceCollector` if it crashes.
 
-```js
+```python
 class DataCollector:
     
     def __init__(self, collectors: List[DataSourceCollector], storage: DataCollectionStorage):
@@ -131,8 +132,9 @@ quoting
 
 #### `load_data_source_collectors()`
 
-It is needed to have a function that is similar to `load_feeds()` to load `DataSourceCollector` instances from a configuration file. Probably, the config should not be extended with any additional fields. Instead, the `feeds` config should be used, because only feeds define which data should be collected. For example, it might be done by adding a method to `PriceFeed` to get needed `DataSourceCollector` instances.
+It is needed to have a function that is similar to `load_feeds()` to load `DataSourceCollector` instances from a configuration file. Likely, the configuration should not be extended with additional fields. Instead, the existing `feeds` configuration should be utilized, as it specifically defines which data needs to be collected. For example, this could be achieved by adding a method to `PriceFeed` to retrieve the necessary `DataSourceCollector` instances.
 
 ### How Can It Be Used
 
-The `DataCollector` can operate as an independent daemon, focused on accumulating required data in isolation from other processes, particularly the `Updater`. But this allows the Updater to easily utilize the aggregated data by using modified Feeds that can access the `DataCollectionStorage`.
+The `DataCollector` can function as an independent daemon, concentrating on accumulating the required data in isolation from other processes, especially the `Updater`. But this allows the Updater to easily utilize the aggregated data by using modified Feeds that can access the `DataCollectionStorage`.
+

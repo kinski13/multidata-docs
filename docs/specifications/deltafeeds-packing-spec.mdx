@@ -4,30 +4,26 @@ sidebar_position: 1
 
 # DeltaFeeds Packing Specifications
 
-## Contract-level data storing spec
+## Contract-Level Data Storing Specifications
 
-### Metric values
+### Metric Update Timestamps
 
-TODO
-
-### Metric update timestamps
-
-A metric's *update timestamp* is represented as a number of epochs back from `Status.epochId` when the metric was updated in the contract.
+A metric's *update timestamp* is represented by the number of epochs that have passed since it was last updated in the contract, counting back from `Status.epochId`.
 
 The number is encoded into a *packed form* by the following procedure:
 
-▪️ Find in the list `[0, 1, 2, 3, 4, 5, 7, 9, 12, 16, 22, 29, 40, 54, 74, 100]` the minimal number equal or greater than the update timestamp.   
-▪️ Use the index of the value.   
-▪️ If no such number can be found (update timestamp is too big), use `15`.   
+* Find in the list `[0, 1, 2, 3, 4, 5, 7, 9, 12, 16, 22, 29, 40, 54, 74, 100]` the minimal number equal to or greater than the update timestamp.
+* Use the index of the value.
+* If no such number can be found (update timestamp is too big), use `15`. 
 
-Note that 0 means the metric is fresh, and any update timestamp greater or equal to 100 denotes obsolete, outdated metric. Note that after this procedure a metric may seem older than it is (with the exception of fresh metrics). A packed form of an update timestamp can be represented with 4 bits.
+Note that 0 means the metric is fresh, and any update timestamp greater than or equal to 100 signifies an obsolete, outdated metric. Note that after this procedure a metric may appear older than it actually is (with the exception of fresh metrics). The packed form of an update timestamp can be represented with 4 bits.
 
-### storage layout
+### Storage Layout
 
 Packed forms of update timestamps are written into a contract as a *base timestamps bit-vector* and a *timestamp updates list*.
 
-The base timestamps bit-vector is a bit vector written to storage slot-by-slot starting from the slot location `keccak256("DeltaFeeds.timestamps")`. It's indexed by metric ids. The value `1` in the vector for a metric means the metric's packed form equal `0`. The value `0` in the vector for a metric means the metric's packed form equal `15`.
+The base timestamps bit-vector is a bit vector written to storage slot-by-slot starting from the slot location `keccak256("DeltaFeeds.timestamps")`. It's indexed by metric IDs. The value `1` in the vector for a metric means the metric's packed form equals `0`. The value `0` in the vector for a metric means the metric's packed form equals `15`.
 
-The timestamp updates list has a variable-length encoding. All metrics encoded in the order of their metric ids into the list. The list is split into slots in such a way that the higher-order byte of a slot stores the number of metrics in the slot, as many as possible values are encoded into remaining 248 bits of the slot honoring the metric order. The slots start from the location `keccak256("DeltaFeeds.timestampUpdates")`. If there was no update to *the timestamp*, than a `1` bit is added to the list. Otherwise, `0` bit is added to the list, followed by 4 bits representing a new timestamp in the packed form.
+The timestamp updates list has a variable-length encoding. All metrics are encoded in the order of their metric IDs into the list. The list is split into slots in such a way that the higher-order byte of a slot stores the number of metrics in the slot, as many values as possible are encoded into remaining 248 bits of the slot, honoring the metric order. The slots start from the location `keccak256("DeltaFeeds.timestampUpdates")`. If there is no update to **the timestamp**, then a `1` bit is added to the list. Otherwise, a `0` bit is added to the list, followed by 4 bits representing a new timestamp in the packed form.
 
-It can be seen that [1..14] packed forms can be encoded only via a timestamp updates list. So it makes sense to consult the list first when calculating a metric update timestamp.
+It can be seen that [1..14] packed forms can be encoded only via a timestamp updates list. Therefore, it makes sense to consult the list first when calculating a metric update timestamp.
