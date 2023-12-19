@@ -7,21 +7,21 @@ sidebar_position: 2
 
 ## Multidata oracle 
 
-The Multidata oracle is optimized for storing and efficiently updating a significant amount of on-chain metrics. Metric examples are token prices, stock and commodity prices, currency rates, bond yields, macro indicators, sensor time series, etc. The logarithmic delta encoding is applied to metric updates. Together with batched updates, this yields impressive network fee savings.
+The Multidata oracle is optimized for storing and efficiently updating a significant number of on-chain metrics. Metric examples are token prices, stock and commodity prices, currency rates, bond yields, macro indicators, sensor time series, etc. The logarithmic delta encoding is applied to metric updates. Together with batched updates, this yields impressive network fee savings.
 
 Currently, a beta version of the oracle quotes 130 metrics on [Arbitrum](https://arbiscan.io/address/0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1). The daily cost of updating a metric is just $0.35.
 
-An alpha version of the oracle quoted **172** crypto-assets of the Unit Protocol on BSC, xDai, Polygon, Fantom, Arbitrum, Aurora, Avalanche, Bittorrent, Boba, CLV Chain, Celo, Cronos, Dogechain, Ethereum Classic, Harmony, Heco, Klaytn, Moonbeam, Moonriver, Oasis, Okex, Optimism, Syscoin blockchains at the same address [0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA](https://bscscan.com/address/0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA). The gas cost of one update was `73 300` gas, the value update precision is `0.2%`. The oldest contract is operational since mid-2021 and processed over 25 000 updates.
+The alpha version of the oracle quoted **172** crypto-assets of the Unit Protocol on BSC, xDai, Polygon, Fantom, Arbitrum, Aurora, Avalanche, Bittorrent, Boba, CLV Chain, Celo, Cronos, Dogechain, Ethereum Classic, Harmony, Heco, Klaytn, Moonbeam, Moonriver, Oasis, Okex, Optimism, Syscoin blockchains at the same address [0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA](https://bscscan.com/address/0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA). The gas cost of one update was `73 300` gas, the value update precision is `0.2%`. The oldest contract is operational since mid-2021 and processed over 25 000 updates.
 
 Another contract at [0xA0D41dA88Cce5404D407D549eB68730F78b6Be4e](https://gnosis.blockscout.com/address/0xA0D41dA88Cce5404D407D549eB68730F78b6Be4e) quotes **751** financial assets. 1 000 updates cost just about $1 !
 
 It would take $563 a day to update the Ethereum mainnet 2 times an hour if the gas price was 40 gwei, and the Ether price was $4000 - about $3 per asset per day.
 
-Another protocol called ProofFeed allows literally free price updates for validators as updates are delivered on-demand during a user interaction with a third-party protocol (e.g. a lending dApp).
+Another protocol called ProofFeed allows for literally free price updates for validators as updates are delivered on-demand during a user interaction with a third-party protocol (e.g. a lending dApp).
 
 The solution is designed with decentralization in mind. The metric feeds may be constructed by multiple parties off-chain and delivered with a single verifiable threshold signature on-chain, see below. This results in significant gas savings compared to other oracle protocols, e.g. Chainlink.
 
-The importance of the off-chain logic can't be underestimated as will be explained below.
+The importance of off-chain logic cannot be underestimated, as explained below.
 
 ### Overall Architecture
 
@@ -40,15 +40,15 @@ There may be several on-chain oracles with different precision/gas cost trade-of
 
 #### Quoting
 
-Each metric quoting process is described by a feed. Typically, a feed is a smart combination of data feeds from the most reliable sources of liquidity for the particular financial asset or trustworthy sources of other real-world data.
+Each metric's quoting process is defined by a feed. Typically, a feed is a smart combination of data feeds from the most reliable sources of liquidity for the particular financial asset or trustworthy sources of other real-world data.
 
-Another key idea behind the quoting approach is the elimination of reliance on any single centralized party, data feed, or asset. E.g., we never rely on the correctness of Binance data and never assume prices of major stablecoins to be close to 1.
+Another key idea behind the quoting approach is the elimination of reliance on any single centralized party, data feed, or asset. For example, we never rely on the correctness of Binance data and never assume prices of major stablecoins are close to 1.
 
 Finally, all the data feeds are implemented with built-in flash loan resistance to eliminate the typical weak spot of oracle solutions.
 
 #### Multiparty operation
 
-**[Multiparty ECDSA](https://github.com/ZenGo-X/multi-party-ecdsa/)** is considered as a solution to the decentralization goal since at the moment only the ECDSA verification is relatively cheap on the Ethereum mainnet. An additional blockchain network (so-called side network) is used to coordinate protocol validators and provide intermediate data storage. The benefits of using a side network:
+**[Multiparty ECDSA](https://github.com/ZenGo-X/multi-party-ecdsa/)** is considered a solution to the decentralization goal since at the moment only the ECDSA verification is relatively cheap on the Ethereum mainnet. An additional blockchain network (so-called side network) is used to coordinate protocol validators and provide intermediate data storage. The benefits of using a side network:
 
 ▪️ no central point of communication (and hence failure)   
 ▪️ participants are DDoS-protected   
@@ -90,3 +90,6 @@ There is the last piece to glue things together - the code that pulls data from 
 #### ChainlinkCompatibility contract
 
 We provide Chainlink-compatible aggregator (`IChainlinkAggregatorV2V3Interface`) for every quoted metric via special contract which is able to generate numerous aggregators in a gas-efficient way.
+
+
+
