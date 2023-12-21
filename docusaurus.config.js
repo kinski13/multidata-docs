@@ -79,11 +79,6 @@ const config = {
             className: 'custom-docs-item',
             label: 'Docs',
           },
-          {
-            label: 'Blog',
-            className: 'custom-blog-item',
-            to: '/blog',
-          },
         ],
       },
       prism: {
