@@ -1,8 +1,8 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const lightCodeTheme = require('prism-react-renderer').themes.github;
+const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -58,7 +58,7 @@ const config = {
         pages: false, // Disable the 'pages' plugin
       },
     ],
-  ],  
+  ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -76,14 +76,14 @@ const config = {
           {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
-            className: 'custom-docs-item',            
+            className: 'custom-docs-item',
             label: 'Docs',
           },
           {
-            label: 'Blog',     
-            className: 'custom-blog-item',                  
+            label: 'Blog',
+            className: 'custom-blog-item',
             to: '/blog',
-          }, 
+          },
         ],
       },
       prism: {
