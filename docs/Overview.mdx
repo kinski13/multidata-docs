@@ -6,15 +6,17 @@ sidebar_position: 1
 
 # Overview
 
-## Multidata oracle 
+## Multidata Oracle 
 
 The Multidata oracle is optimized for storing and efficiently updating a significant number of on-chain metrics. Metric examples are token prices, stock and commodity prices, currency rates, bond yields, macro indicators, sensor time series, etc. The logarithmic delta encoding is applied to metric updates. Together with batched updates, this yields impressive network fee savings.
 
 Currently, a beta version of the oracle quotes 130 metrics on [Arbitrum](https://arbiscan.io/address/0xcDa7a6D7CB6d21cB300797c3caA8Bae74CCAe8d1). The daily cost of updating a metric is just $0.35.
 
-The alpha version of the oracle quoted **172** crypto-assets of the Unit Protocol on BSC, xDai, Polygon, Fantom, Arbitrum, Aurora, Avalanche, Bittorrent, Boba, CLV Chain, Celo, Cronos, Dogechain, Ethereum Classic, Harmony, Heco, Klaytn, Moonbeam, Moonriver, Oasis, Okex, Optimism, Syscoin blockchains at the same address [0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA](https://bscscan.com/address/0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA). The gas cost of one update was `73 300` gas, the value update precision is `0.2%`. The oldest contract is operational since mid-2021 and processed over 25 000 updates.
+The alpha version of the oracle quoted **172** crypto-assets of the Unit Protocol on BSC, Gnosis, Polygon, Fantom, Arbitrum, Aurora, Avalanche, Bittorrent, Boba, CLV Chain, Celo, Cronos, Dogechain, Ethereum Classic, Harmony, Heco, Klaytn, Moonbeam, Moonriver, Oasis, Okex, Optimism, Syscoin blockchains at the same address [0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA](https://bscscan.com/address/0xf315a5cc91338a3886d3c3a11E7b494f3302B3fA). 
 
-Another contract at [0xA0D41dA88Cce5404D407D549eB68730F78b6Be4e](https://gnosis.blockscout.com/address/0xA0D41dA88Cce5404D407D549eB68730F78b6Be4e) quotes **751** financial assets. 1 000 updates cost just about $1 !
+The gas cost of one update was `73 300` gas, the value update precision is `0.2%`. The oldest contract is operational since mid-2021 and processed over 25 000 updates.
+
+Another contract at [0xA0D41dA88Cce5404D407D549eB68730F78b6Be4e](https://gnosis.blockscout.com/address/0xA0D41dA88Cce5404D407D549eB68730F78b6Be4e) quotes **751** financial assets. 1 000 updates cost just about US $1 !
 
 It would take $563 a day to update the Ethereum mainnet 2 times an hour if the gas price was 40 gwei, and the Ether price was $4000 - about $3 per asset per day.
 
@@ -33,7 +35,7 @@ The importance of off-chain logic cannot be underestimated, as explained below.
 
 ### Flow
 
-#### Adding metrics
+#### Adding Metrics
 
 Metrics have to be added to the contract to allow querying and updating. The process is quite straightforward and utilizes the regular quoting mechanics to get the initial value. The access control is the same as for updating quotes, however, any other viable governance strategy may be implemented.
 
@@ -43,20 +45,20 @@ There may be several on-chain oracles with different precision/gas cost trade-of
 
 Each metric's quoting process is defined by a feed. Typically, a feed is a smart combination of data feeds from the most reliable sources of liquidity for the particular financial asset or trustworthy sources of other real-world data.
 
-Another key idea behind the quoting approach is the elimination of reliance on any single centralized party, data feed, or asset. For example, we never rely on the correctness of Binance data and never assume prices of major stablecoins are close to 1.
+Another key idea behind the quoting approach is the elimination of reliance on any single centralized party, data feed, or asset. For example, we never rely on the correctness of Binance data and never assume prices of major stablecoins are close to US $1.
 
 Finally, all the data feeds are implemented with built-in flash loan resistance to eliminate the typical weak spot of oracle solutions.
 
-#### Multiparty operation
+#### Multiparty Operation
 
-**[Multiparty ECDSA](https://github.com/ZenGo-X/multi-party-ecdsa/)** is considered a solution to the decentralization goal since at the moment only the ECDSA verification is relatively cheap on the Ethereum mainnet. An additional blockchain network (so-called side network) is used to coordinate protocol validators and provide intermediate data storage. The benefits of using a side network:
+[Multiparty ECDSA](https://github.com/ZenGo-X/multi-party-ecdsa/) is considered a solution to the decentralization goal since at the moment only the ECDSA verification is relatively cheap on the Ethereum mainnet. An additional blockchain network (so-called side network) is used to coordinate protocol validators and provide intermediate data storage. The benefits of using a side network:
 
-- no central point of communication (and hence failure)   
-- participants are DDoS-protected   
-- the network can be easily switched   
-- protocol does not trust the side network   
+- no central point of communication (and hence failure)
+- participants are DDoS-protected
+- the network can be easily switched
+- protocol does not trust the side network
 
-#### On-chain querying
+#### On-chain Querying
 
 Only one function with an intuitive interface should be called to get a metric value. The value interpretation depends on the value format of the feed. The oracle protocol itself and smart contracts are format-agnostic and flexible.
 
@@ -64,23 +66,23 @@ Metric metadata is available as well: description, currency, tags.
 
 ### Components
 
-#### Oracle contract
+#### Oracle Contract
 
 The contract is quite minimalistic. For each metric, it keeps metadata, the value at some moment in the past, and the difference (delta) to calculate the last known value on the fly. It is much cheaper to store a batch of differences than to update the values one by one.
 
 Additionally, the contract exposes several view functions to support the updater library operation (see below).
 
-#### Updater library
+#### Updater Library
 
 Since the contract exposes quite a low-level data model (as well as some other primitives), the approach to updating the quotes can be quite flexible and can be changed on the fly. It will not require the contract redeployment as quote updating is coded off-chain in a form of a library. The idea is simple: if the difference between the base value and the current value can be represented by a small delta, use the delta. Otherwise, set the base value to the current value.
 
 Because a delta is valid only for a particular base value, we must ensure that the base value is not updated concurrently. Epochs checks prevent such race conditions.
 
-#### Side network
+#### Side Network
 
 A side network is maintained by the protocol validators as a cheap and robust trustless data exchange medium. Robust operation is achieved by fast consensus algorithm and low block times. Additionally, such a network can support real-time feeds.
 
-#### Quoting library
+#### Quoting Library
 
 A set of metrics is expressed in a configuration file. The quoting library processes the metrics and constructs a tree of objects called feeds. Here we take a modular approach to decompose a quoting task as a tree of ready-made feeds, e.g. UniswapV3Feed.
 
@@ -88,7 +90,7 @@ A set of metrics is expressed in a configuration file. The quoting library proce
 
 There is the last piece to glue things together - the code that pulls data from quoting library and feeds it into the contract using the updater library. This code can be run as a Unix daemon or as a Docker container.
 
-#### ChainlinkCompatibility contract
+#### ChainlinkCompatibility Contract
 
 We provide Chainlink-compatible aggregator (`IChainlinkAggregatorV2V3Interface`) for every quoted metric via special contract which is able to generate numerous aggregators in a gas-efficient way.
 

@@ -19,7 +19,7 @@ Determine whether an exchange has sufficient liquidity for a specific asset.
 
 1. Obtain liquidity data for each metric for the specified asset and exchange using the API of `CEXClient`.   
 2. Check whether the liquidity data for the given asset on the exchange meets the set thresholds for each metric.
-3. If the exchange meets all thresholds for all metrics, it is considered liquid for the given asset; otherwise, the exchange is excluded from the price calculation for that asset.  
+3. If the exchange meets all thresholds for all metrics, consider it liquid for the given asset; otherwise, exclude this exchange from the price calculation for the given asset.
 
 This logic will be implemented in `CEXLiquidityCheckMixin` and added to CEX Feeds.
 
@@ -39,21 +39,20 @@ This is the amount of the asset that has been bought and sold on the exchange ov
 For simplicity in the initial implementation, the trading volume is calculated over a period corresponding to the price weighting window, using trade data that is also required for price calculation, specifically `CEXClient.get_trades()`.
 
 #### Threshold
-`min_trade_volume` (default: $1,000)
+`min_trade_volume` (default: US $1,000)
 
 ### Order Book Depth
 
 This metric represents the total amount of the asset available for sale or purchase at specified prices on the exchange. The greater the order book depth is, the higher the liquidity of the exchange is considered.
 
-`order_book_depth_percentage` must be defined. It is a percentage of the current market price of the asset that determines the price range for analyzing the order book depth. For example, a 5% value indicates that orders with prices within the range of 95% to 105% of the current market price of the asset are analyzed. This parameter is set globally for all exchanges, with a default value of 5%.
-
+`order_book_depth_percentage` must be defined. It is a percentage of the current market price of the asset that determines the price range for analyzing the order book depth. For example, a 5% value indicates that orders with prices within the range of 95% to 105% of the current market price of the asset are analyzed. This parameter is set globally for all exchanges (default: 5%).
 #### Algorithm
 
 1. Obtain the open order data using the exchange's API, specifically `CEXClient.get_order_book()`.
-2. Calculate the total amount of the asset within this price range.
+2. Calculate the total amount of the asset in the range.
 
 #### Threshold
-`min_order_book_depth` (default: $10,000)
+`min_order_book_depth` (default: US $10,000)
 
 ### Spread
 
@@ -62,7 +61,7 @@ Calculate the spread as a percentage, which represents the relative difference b
 #### Algorithm
 
 1. Take the open order data, already used for calculating the order book depth, specifically `CEXClient.get_order_book()`.   
-2. Determine the best asking price and the best bidding price for the asset.    
+2. Determine the best ask price and the best bid price for the asset.  
 3. Calculate the average value between ask and bid: average_price = (ask + bid) / 2.   
 4. Calculate the spread as the difference between the best ask price and the best bid price: spread = ask - bid.   
 5. Calculate the spread as a percentage: (spread / average_price) * 100.   
@@ -76,4 +75,4 @@ Calculate the spread as a percentage, which represents the relative difference b
 - It may be necessary to use retries when checking the spread or the order book depth, as their values may temporarily change due to large market transactions.    
 - Accumulating trade data over time, rather than solely at the moment of price calculation, will allow for evaluating trade volume over a desired time period.   
 - Relative metrics, such as "market share" could be added, where we calculate trade volume in proportion to all available exchanges. This could be done in a derived Feed instead of the MedianFeed.   
-- Default threshold values and parameters might need adjustments based on real-world usage data.  
+- Default threshold values and parameters might need adjustments based on real-world usage data.

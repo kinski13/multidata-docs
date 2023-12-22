@@ -23,13 +23,13 @@ sidebar_position: 3
     - retrieve values of all metrics on the block at the end of the epoch
     - create a Merkle tree and obtain the root
     - via multiparty mechanism sign the Merkle tree root for each target network
-    - send the root, vrs to MedianFeeds
+    - send the root, signatures to MedianFeeds
 
 - ProofFeeds:
-  - accepts root, vrs, proof, metric value, timestamp, epoch
-  - checks that signature of the root is correct
-  - checks that the Merkle proof is valid for the root
-  - the verified metric value can be stored and returned via ICoreMultidataFeedsReader
+  - accept root, signatures, proof, metric value, timestamp, epoch
+  - check that signature of the root is correct
+  - check that the Merkle proof is valid for the root
+  - the verified value can be stored and returned via ICoreMultidataFeedsReader
 
 - js SDK:
   - allows dApps to retrieve metric values from the MedianFeeds
@@ -37,7 +37,7 @@ sidebar_position: 3
   - generates a Merkle tree, root, and proof for the required metric
 
 - Metric values users:
-  - retrieve the epoch, Merkle root, vrs, Merkle proof, metric ID, metric value, and metric update timestamp from the JS SDK
+  - retrieve the epoch, Merkle root, signatures, Merkle proof, metric ID, metric value, and metric update timestamp from the JS SDK
   - send it to own contract
   - the contract verifies that the metric update timestamp is suitable for its purposes
   - the contract calls MerkleFeeds and verifies that the metric value and metric update timestamp are correct
@@ -75,7 +75,7 @@ Read the last Merkle tree root:
 
 Administrative functions (add validators, add/update metrics) are the same as in Multiparty oracle.
 
-Could be called several times per epoch by each validator, but with different metricIds. Sending batches of 100 values is recommended. In this case, typically, 1_138_512 - 9_262_586 gas will be spent (best - worst case, depending for which metrics the median is calculated for).
+Could be called several times per epoch by each validator, but with different metricIDs. Sending batches of 100 values is recommended. In this case, typically, 1_138_512 - 9_262_586 gas will be spent (best to worst case; depends on the metrics for which the median is calculated).
 
 ## Validators
 
@@ -123,7 +123,7 @@ function requireValidProof(
     CheckedData memory checkedData_
 ) external view;
 
-// returns the result of the check
+// returns result of check
 function isProofValid(
     SignedMerkleTreeRoot memory signedMerkleTreeRoot_,
     CheckedData memory checkedData_
@@ -141,7 +141,7 @@ function setValue(SignedMerkleTreeRoot calldata signedMerkleTreeRoot_, CheckedDa
 Need to implement method:
 
 ```js
-getMetricValueWithProof(metricId)
+  getMetricValueWithProof(metricId)
 ```
 
 - stores addresses of MedianFeeds in the Multidata chain and backup chains (such as Gnosis)
@@ -150,7 +150,7 @@ getMetricValueWithProof(metricId)
   - calculates the last block of epoch
   - retrieves values from MedianFeeds on this block
 - builds a Merkle tree https://github.com/OpenZeppelin/merkle-tree
-- gets proofs for the metricId
+- gets proofs for the metricID
 - returns
   - SignedMerkleTreeRoot 
   - CheckedData

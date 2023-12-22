@@ -10,14 +10,15 @@ We utilize a variation of the [Gitlab Flow](https://about.gitlab.com/topics/vers
 
 ### Feature branches
 
-A feature branch is a dedicated branch used to implement a single feature in the project. When starting the development of a new feature, create a feature branch from the main as your starting point. If you anticipate that your work will depend on another branch, you may also branch out from that specific branch (and merge back into it later). Branches should be named following the format: feature/, for example, feature/uniswap-min-liquidity. If the feature is actually a bug fix, name it as fix/, such as fix/threading-issue. Upon completing the feature, merge the changes into the main branch using a pull request.
+A feature branch is a dedicated branch used to implement a single feature in the project. When starting the development of a new feature, create a feature branch from the main as your starting point. If you anticipate that your work will depend on another branch, you may also branch out from that specific branch (and merge back into it later). Branches should be named following the format: `feature/<feature-description>`, for example, feature/uniswap-min-liquidity. If the feature is actually a bug fix, name it as `fix/<fix-description>`, such as fix/threading-issue. Upon completing the feature, merge the changes into the main branch using a pull request.
 
 ### Release branches
 
-A release branch supports a new production release. When it's time for a new release, create a release branch using the main branch as a starting point. The branch should be named following this format: release-x.y, for example, release-1.0 or release-2.3. After the release branch is published, the following items can be added to the branch:
+A release branch supports a new production release. When it's time for a new release, create a release branch using the main branch as a starting point. The branch should be named following this format: release-`<major>.<minor>`, for example, release-1.0 or release-2.3. After the release branch is published, the following items can be added to the branch:
 
-- Bug fixes   
-- Minor features, if a new release is not possible (for example, due to the presence of commits not ready for production in the main) If possible, first merge these fixes into main, and then cherry-pick them into the release branch. This approach is known as "upstream first".   
+* Bug fixes
+* Minor features, if a new release is not possible (for example, due to the presence of commits not ready for production in the main) 
+If possible, first merge these fixes into main, and then cherry-pick them into the release branch. This approach is known as "upstream first".
 
 ### `rebase` and `force push`
 
@@ -29,9 +30,9 @@ Each project is versioned in accordance with the [Semver specification](https://
 
 The version structure consists of three components: major, minor, and patch versions. Each is incremented as follows:
 
-- **Major version** (0.x.y): Currently, the major version is consistently set to 0. 
-- **Minor version** (x.MINOR.y): The minor version is incremented when backwards incompatible changes are introduced.   
-- **Patch version** (x.y.PATCH): The patch version is incremented in all other cases, such as when backwards compatible changes are made or bugs are fixed.   
+- **Major version** (0.x.y): Currently, the major version is consistently set to 0.
+- **Minor version** (x.MINOR.y): The minor version is incremented when backwards incompatible changes are introduced.
+- **Patch version** (x.y.PATCH): The patch version is incremented in all other cases, such as when backwards compatible changes are made or bugs are fixed.
 
 ## Dependency Versioning
 
@@ -55,7 +56,7 @@ We use a variation of the [Sphinx](https://sphinx-rtd-tutorial.readthedocs.io/en
 
 Example:
 
-```js
+```
 """
 Summary.
 
@@ -67,8 +68,8 @@ Summary.
 ```
 We adhere to the following specific practices:
 
-- Docstring starts with an empty line   
-- Empty line after summary block is omitted   
-- Description block after summary may be omitted in obvious cases   
-- Docstrings can be omitted completely in private methods and functions   
+* Docstring starts with an empty line
+* Empty line after summary block is omitted
+* Description block after summary may be omitted in obvious cases
+* Docstrings can be omitted completely in private methods and functions
 

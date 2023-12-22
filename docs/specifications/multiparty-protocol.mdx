@@ -2,25 +2,25 @@
 sidebar_position: 5
 ---
 
-# Multiparty protocol
+# Multiparty Protocol
 
-## Threat model
+## Threat Model
 
 1. At least `M = 2 * N // 3 + 1` participants are honest, non-compromised and operational.
 2. The mainnet (the network hosting the oracle contract) should be reasonably operational, live, and safeguarded against deep reorganizations.
 3. Mainnet nodes used by honest participants work correctly.
 4. No significant changes to the participant set should occur simultaneously. Only one participant set change may be affected by a mainnet reorganization at the same time.
 
-## Multiparty protocol proposals
+## Multiparty Protocol Proposals
 
-Are required to achieve the "implementation secure enough to provide feeds to $1B+ TVL projects" objective.
+Are required to achieve the "implementation secure enough to provide feeds to US $1B+ TVL projects" objective.
 
 1. **Deterministic feeds**. For each privileged transaction, attach at least M out of N (v, r, s)-signatures instead of `owner`'s signature.
     - **cons:**
       - only "manual" punishment (expulsion) for dishonest nodes
-      - signees have to compute feeds in a deterministic way, even slightest disagreement ruins liveness.
+      - signees have to compute feeds in a deterministic way, even slightest disagreement ruins liveness
       - dishonest nodes may skip the quoting work by copying other's results
-      - up to 3340 * N extra gas cost
+      - up to `3340 * N` extra gas cost
       - small changes to the main contract
       - small coordination helper contract for a cheap net
       - small daemon changes
@@ -28,7 +28,7 @@ Are required to achieve the "implementation secure enough to provide feeds to $1
 2. Improved #1, **almost deterministic feeds**. In cases of disagreement on the feed data, an additional stage is undertaken to sign the feed data where for each asset the price reported by at least M participants is taken, or the current one, if no such price exists.
     - **cons:**
       - only "manual" punishment (expulsion) for dishonest nodes
-      - signees are urged to compute feeds in a deterministic way, but slight disagreements are acceptable.
+      - signees are urged to compute feeds in a deterministic way, but slight disagreements are acceptable
       - dishonest nodes may skip the quoting work by copying other's results
       - up to `3340 * N` extra gas cost
       - extra stage in a case of a disagreement
@@ -40,7 +40,7 @@ Are required to achieve the "implementation secure enough to provide feeds to $1
     - **cons:**
       - only "manual" punishment (expulsion) for dishonest nodes
       - up to `3340 * N` extra gas cost
-      - extra 2 stages
+      - two extra stages
       - small changes to the main contract
       - medium-complexity coordination helper contract for a cheap net
       - medium-complexity daemon changes
@@ -58,7 +58,7 @@ The last stage in the options 1-3 (M+ individual signings) may be replaced with 
 
 # Specification
 
-The third option was chosen and further developed. The idea here is to coordinate participants and provide intermediate data storage via a side network (xDai, Fantom Opera, etc). The benefits of using a side network:
+The third option was chosen and further developed. The idea here is to coordinate participants and provide intermediate data storage via a side network (Gnosis, Fantom Opera, etc). The benefits of using a side network:
 
 - no central point of communication (and hence failure)
 - participants are DDoS-protected
@@ -71,12 +71,12 @@ The oracle is managed by a set of participating parties designated by an Ethereu
 
 There may be at least two approaches to cryptographically secure authorize an operation by such a participants committee:
 
-- Transmit a quorum of signatures to the mainnet and verify them on-chain using `ecrecover` in a loop. Implementation of this approach is named the multisignature case in the document below. It's a simple solution but requires an extra approx. `5300 * (quorum - 1)` gas (further optimizations are possible).
-- Create an Ethereum-compatible threshold signature and verify it on-chain using `ecrecover`. Signing the mainnet transaction itself is less favorable as changing the fee or the sender (see mainnet transacting schedule) requires re-signing. Implementation of this approach is named the threshold signature case in the document below.
+* Transmit a quorum of signatures to the mainnet and verify them on-chain using `ecrecover` in a loop. Implementation of this approach is named the multisignature case in the document below. It's a simple solution but requires an extra approx. `5300 * (quorum - 1)` gas (further optimizations are possible).
+* Create an Ethereum-compatible threshold signature and verify it on-chain using `ecrecover`. Signing the mainnet transaction itself is less favorable as changing the fee or the sender (see mainnet transacting schedule) requires re-signing. Implementation of this approach is named the threshold signature case in the document below.
 
 Regardless of the way chosen, most of the protocol stays the same. Differences are highlighted.
 
-## Message hashing & signing
+## Message Hashing & Signing
 
 The word "message" below in the phrases like "a hash of a message" or "a signature of a message" means a serialized typed structured data in accordance with EIP-712. `keccak256` of such a message (which must also be used during signing) must be produced according to the standard. The message will be described with a `typeHash`.
 
@@ -93,13 +93,13 @@ DOMAIN_SEPARATOR = keccak256(
 ));
 ```
 
-Where `chainid` is a chain id of the mainnet contract and `oracleContractAddress` is the mainnet contract address.
+Where `chainid` is a chain ID of the mainnet contract and `oracleContractAddress` is the mainnet contract address.
 
-The term 'create calldata' refers to generating transaction data for a specified function signature and arguments.
+The term "create calldata" refers to generating transaction data for a specified function signature and arguments.
 
-## Updating the oracle
+## Updating the Oracle
 
-### Epoch schedule
+### Epoch Schedule
 
 Epoch number (== epoch start time) for unix time `t` is `t / EPOCH_DURATION * EPOCH_DURATION`.
 
@@ -107,19 +107,19 @@ An epoch is divided into stages. Stage times below are unitless fractions and mu
 
 Participant must process an epoch only once.
 
-### Commit stage
+### Commit Stage
 
-The stage time range spans from 0 to 0.15
+The stage time range is [0, 0.15).
 
 #### Participant
 
 Identify prices for all known assets using any feasible method. If for an asset the price can't be determined, use NO_PRICE (== max uint) as a special value. Create a uint prices array, ordered in the sequence of the assets. Compute the hash of the message `Commit(address sender,uint32 epochId,uint256[] prices)` where `sender` is the participant's address. Transact `commit(epochId, hash)` to the contract.
 
-#### The contract
+#### The Contract
 
 `commit(uint32 epochId,  bytes32 hash)`. Check that `epochId` is current; the participant is valid; the participant has not yet transacted `commit` for the `epochId`. Record `epochId => participant => hash` & emit an event.
 
-### Reveal stage
+### Reveal Stage
 
 The stage time range is [0.15, 0.20). If a quorum of the committed hashes is not present, the epoch is marked as failed (but no explicit storage write is needed), no further actions are needed.
 
@@ -130,14 +130,14 @@ Transact `reveal(epochId,  prices, pricesSignature)` to the contract, where `pri
 
 *<small>Comment: `pricesSignature` is needed not to trust the side network and not to assume correct functioning of the used side network node.</small>*
 
-#### The contract
+#### The Contract
 
 `reveal(uint32 epochId, uint256[] prices, Signature pricesSignature)`. Check that `epochId` is current; the participant is valid; the participant has not yet transacted `reveal` for the `epochId`; the previously committed prices hash matches the hash of the `Commit` message constructed from `msg.sender`, `epochId`, `prices`.
 Emit `epochId` in an event.
 
 *<small>Comment: no need to record all the prices to the state or emit them as they can be read by participants from the tx data.</small>*
 
-### Computation stage
+### Computation Stage
 
 If a quorum of the revealed price arrays is not present, the epoch is marked as failed (but no explicit storage write is needed), no further actions are needed.
 
@@ -153,30 +153,29 @@ Read successfully revealed prices from the corresponding transaction data. Take 
 
 Translate resulting prices into full_update_assets, full_update_prices, new_delta_bytes arrays as in [updater.py](https://github.com/multidatacore/validator/blob/7059f26f50f3798059254d28ed3c42d53c63d6a3/python/unitprotocol/fo/updater.py#L63-L111).
 
-Sign the message `Update(uint32 epochId, uint32 previousEpochId, address[] assets, uint256[] basePrices, bytes deltas)` (where `previousEpochId` is the current epoch number, assets are `full_update_assets`, basePrices are `full_update_prices`, deltas are `new_delta_bytes`).
-
+Sign the message `Update(uint32 epochId,uint32 previousEpochId,address[] assets,uint256[] basePrices,bytes deltas)` (where `previousEpochId` is the current epoch number, `assets` are full_update_assets, `basePrices` are full_update_prices, `deltas` are new_delta_bytes).
 *<small>Comment: `previousEpochId` is needed because deltas are relative, and an update is applicable only to the state for which it was created.</small>*
 
-- Multisignature case: transact `signed(epochId, signature)` to the contract.
-- Threshold signature case: perform multiparty signing of the message
+* Multisignature case: transact `signed(epochId, signature)` to the contract.
+* Threshold signature case: perform multiparty signing of the message
 
-#### The side network contract
+#### The Side Network Contract
 
-- Multisignature case: `signed(uint32 epochId, signature)`: emit `epochId, signature` for a valid participant if not emitted yet and `epochId` is current.
+* Multisignature case: `signed(uint32 epochId, signature)`: emit `epochId, signature` for a valid participant if not emitted yet and `epochId` is current.
 
-### Update stage
+### Update Stage
 
 #### Participant
 
-- Multisignature case: gather a quorum of unique valid signatures from the contract for the Update message produced at the previous stage. Use the participant set from the previous stage to check the validity of the signature participants. Transact to the mainnet contract along with the signatures.
-- Threshold signature case: Transact the threshold signature produced at the previous stage to the mainnet contract.
+* Multisignature case: gather a quorum of unique valid signatures from the contract for the `Update` message produced at the previous stage. Use the participant set from the previous stage to check the validity of the signature participants. Transact to the mainnet contract along with the signatures.
+* Threshold signature case: Transact the threshold signature produced at the previous stage to the mainnet contract.
 
-#### The main network contract
+#### The Main Network Contract
 
-- Multisignature case: check the set of signatures; check if a quorum is reached. Apply the update.
-- Threshold signature case: check that the Update message signature matches the threshold signing address. Apply the update.
+* Multisignature case: check the set of signatures; check if a quorum is reached. Apply the update.
+* Threshold signature case: check that the `Update` message signature matches the threshold signing address. Apply the update.
 
-### Overall diagram
+### Overall Diagram
 
 <div style={{ display: "flex", justifyContent: "center" }}>
     <img src="/img/multi-diagram.png" alt="Multidata Architecture Diagram" style={{ width: "80%" }} />
@@ -184,29 +183,29 @@ Sign the message `Update(uint32 epochId, uint32 previousEpochId, address[] asset
 <br />
 
 
-## Privileged functions
+## Privileged Functions
 
 ### Participant
 
 Create calldata for a privileged transaction, e.g.: `addAsset(asset, currentPrice, salt, deadline)`.
 
-- Multisignature case: sign the message `Vote(bytes calldata)` and transact `vote(calldata, signature)` to the contract. As soon as the quorum of unique valid signatures is present (from the current mainnet contract viewpoint), transact to the mainnet.
-- Threshold signature case: when enough participants signaled their acceptance of the proposed operation, perform multiparty signing of the message `Vote(bytes calldata)`.
+* Multisignature case: sign the message `Vote(bytes calldata)` and transact `vote(calldata, signature)` to the contract. As soon as the quorum of unique valid signatures is present (from the current mainnet contract viewpoint), transact to the mainnet.
+* Threshold signature case: when enough participants signaled their acceptance of the proposed operation, perform multiparty signing of the message `Vote(bytes calldata)`.
 
 Note that each particular transaction calldata must include a unique salt to prevent replay attacks. Additionally, a deadline timestamp may be included to limit the TTL of the action proposed.
 
 Also, note that the privileged call signatures gathering requires scanning the entire side network contract lifetime for corresponding events.
 
-### The side network contract
+### The Side Network Contract
 
-- Multisignature case: `vote(bytes calldata, signature)`: emit an event for a valid participant.
-- Threshold signature case: a participant signals their acceptance of the proposed operation by transacting `acceptOperation(uint operation_id)`. : The contract emits an event for a unique valid participant.
+* Multisignature case: `vote(bytes calldata, signature)`: emit an event for a valid participant.
+* Threshold signature case: a participant signals their acceptance of the proposed operation by transacting `acceptOperation(uint operation_id)`. : The contract emits an event for a unique valid participant.
 
-### The main network contract
+### The Main Network Contract
 
 Check the signatures. Check the deadline, if any. Check that the given salt is not used yet; mark the salt as used. Exec the call (via self-call, perhaps).
 
-## Participant set modification & synchronization with side network
+## Participant Set Modification & Synchronization with Side Network
 
 Participant set synchronization (between the contracts) is desirable for participants filtering, but not required. Is done as a privileged function (see above), but with extra work performed.
 
@@ -214,26 +213,26 @@ Participant set synchronization (between the contracts) is desirable for partici
 
 ### Participant
 
-- Multisignature case
+* Multisignature case
 
 Participants produce a privileged function signature(s). Participants don't initiate a new privileged function call on the side network until the current fully signed call is mined on the mainnet. Participants don't bypass the side network contract.
 
-- Threshold signature case
+* Threshold signature case
 
 After an acceptance quorum is reached on a side network, the new participants perform distributed key generation (DKG) and announce a new owner's public address. The address is used as an argument of a `changeOwner(address newOwner, uint quorum, address[] calldata newParticipants, uint salt, uint deadline)` privileged call.
 
-### The main network contract
+### The Main Network Contract
 
 Privileged calls are processed as usual.
 
-### The side network contract
+### The Side Network Contract
 
 The contract verifies signatures using the main network contract address & chain id.
 
-- Multisignature case: detecting participant set modification calls (`addParticipant`, `setQuorum`, etc) via selectors, applying them to self (via self-call, perhaps), and emitting an event when the quorum is present.
-- Threshold signature case: the current owner executes the `changeOwner(address newOwner, uint quorum, address[] calldata participants, uint salt, uint deadline)` privileged call, the contract extracts participants.
+* Multisignature case: detecting participant set modification calls (`addParticipant`, `setQuorum`, etc) via selectors, applying them to self (via self-call, perhaps), and emitting an event when the quorum is present.
+* Threshold signature case: the current owner executes the `changeOwner(address newOwner, uint quorum, address[] calldata participants, uint salt, uint deadline)` privileged call, the contract extracts participants.
 
-## Mainnet transacting schedule
+## Mainnet Transacting Schedule
 
 Even when all participants are honest, there is the tragedy of the commons (of some degree) regarding paying for mainnet transactions. A simple schedule may be suggested to address the issue.
 
@@ -241,19 +240,19 @@ Let `T` be the time associated with some data, deterministic for all participant
 
 Then, `i`-th participant must deliver a transaction to the mainnet during the time slot starting at `T + D * (uint(keccak256(epochId)) + i) % totalParticipants` of the length `D`. The absence of such a transaction can be easily proven by looking at the mainnet.
 
-## Extra notes
+## Extra Notes
 
-### Updating the oracle
+### Updating the Oracle
 
-- The protocol doesn't depend on strict synchronization of participant clocks - in the worst case signed data won't match and multiparty signature won't be produced.
-- Moreover, it's desirable to wait for some blocks after a stage beginning to avoid network reorganizations.
-- The protocol relies on off-chain computations by the participants and doesn't rely on on-chain computation. Again, no multiparty signature in the worst case. Such an approach has several benefits: small gas footprint (heavy computations are impossible even on side networks), simpler code, no side network state dependence.
+* The protocol doesn't depend on strict synchronization of participant clocks - in the worst case signed data won't match and multiparty signature won't be produced.
+* Moreover, it's desirable to wait for some blocks after a stage beginning to avoid network reorganizations.
+* The protocol relies on off-chain computations by the participants and doesn't rely on on-chain computation. Again, no multiparty signature in the worst case. Such an approach has several benefits: small gas footprint (heavy computations are impossible even on side networks), simpler code, no side network state dependence.
 
-### Participant set synchronization
+### Participant Set Synchronization
 
 As an ultimate (and quite cheap) mitigation of the de-synchronization case, a new side network contract deployment may be suggested.
 
-### Threshold signature participant ban
+### Threshold Signature Participant Ban
 
 An automated temporary ban may be introduced for participants who issue late or malformed multiparty signing protocol messages. For example, the schedule may be as follows: two misbehavior per 24h leads to 24h ban. Such a measure is not required to secure the protocol but to facilitate liveness, since a quorum of honest participants can remove misbehaving participant(s) any time. As such, it may be implemented on the side network contract side.
 

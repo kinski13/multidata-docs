@@ -2,13 +2,13 @@
 sidebar_position: 6
 ---
 
-# Quoting data collection
+# Quoting Data Collection
 
-## Data Collection Architecture proposals in `quoting`
+## Data Collection Architecture Proposals in `quoting`
 
-This document outlines the architecture for data collection within the `quoting` project. In this framework, `DataCollector` acts as an orchestrator, similar to the role of `Feeder`, managing the lifecycles of various data sources. On the other hand, `DataSourceCollector` functions similarly to `PriceFeed`, being specifically designed for each type of data, such as trade data using `CEXClient`, liquidity data, and so on.
+This document outlines the architecture for data collection within the `quoting` project. In this framework, `DataCollector` acts as an orchestrator, similar to the role of `Feeder`, managing the lifecycles of various data sources. On the other hand, `DataSourceCollector` functions similarly to `PriceFeed`, designed for each type of data, such as trade data using `CEXClient`, liquidity data, and so on.
 
-### New components
+### New Components
 
 #### DataCollectionStorage
 
@@ -38,11 +38,11 @@ class DataCollectionStorage(ABC):
 
 In the Redis implementation, the time-series data would be stored using Redis TimeSeries, which provides efficient storage and querying for time-based data.
 
-**Modules to add**
+**Modules to Add**
 
 For example:
 
-```js
+```plaintext
 quoting
 └── storage
     ├── __init__.py
@@ -83,11 +83,11 @@ For example:
 
 These implementations are expected to be modular and easy to plug into the `DataCollector` orchestration layer.
 
-**Modules to add**
+**Modules to Add**
 
 For example:
 
-```js
+```plaintext
 quoting
 └── data_collectors
     ├── __init__.py
@@ -99,7 +99,7 @@ quoting
 
 **DataCollector Interaction**
 
-The `DataCollector` class can simply call the `run()` method for each DataSourceCollector instance. Each `DataSourceCollector` operates independently by polling its data source or listening to a WebSocket, and it sends the data to the designated storage.
+The `DataCollector` class can simply call the `run()` method for each `DataSourceCollector` instance. Each `DataSourceCollector` operates independently by polling its data source or listening to a WebSocket, and it sends the data to the designated storage.
 
 #### DataCollector
 
@@ -121,11 +121,11 @@ class DataCollector:
         # ...
 ```
 
-**Module to add**
+**Module to Add**
 
 For example:
 
-```js
+```plaintext
 quoting
 └── data_collector.py
 ```
